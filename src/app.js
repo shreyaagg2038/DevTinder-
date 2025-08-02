@@ -1,37 +1,34 @@
 const express = require('express');
 
 const app = express();
-const {authAdmin,userAdmin} = require("./middlewares/auth.js")
-//creating admin/getData and admin/deleteUser api
-//Adding logic to check that admin is the one who is doing these operations
-// so this means everytime I want to check auth i need to add it in all admin apis but this is not good way to do this 
-// so here comes middleware as a saviour
+const {connectDb} = require("./config/database");
+const {User} = require("./models/user");
 
-app.use("/admin",authAdmin)
-
-//app.use("/user",userAdmin);
-
-app.get("/user/getProfiles",userAdmin,(req,res)=>{
-    throw new error("abcdefghijkl");
-    res.send("All the profiles of the users");
-})
-//Error Handling middleware 
-app.use('/',(err,req,res,next)=>{
-    if(err){
-        res.status(500).send("Something went wrong");
+app.post("/signup",async (req,res)=>{
+    const userObj = {
+        firstName : "Ramna",
+        lastName : "Verma",
+        email : "ramna1234@gmail.com",
+        password : "Helloworld"
     }
+    //CREATING A NEW INSTANCE OF USER MODEL
+    try{
+    const user1 = new User(userObj);
+    await user1.save();
+    res.send("User added successfully");
+    }
+    catch(err) {
+        res.status(500).send("Error while adding user");
+    }
+
 })
-app.get("/admin/getData",(req,res)=>{
-    res.send("Data sent successfully");
-})
 
-app.get("/admin/deleteUser",(req,res)=>{
-    res.send("Deleted a User");
-})
-
-
-
-
-app.listen(3000,()=>{
+connectDb().then(()=>{
+    console.log("Successfully connected to the DB");
+    app.listen(3000,()=>{
     console.log("Server is successfully listening on port 3000");
 })
+}
+).catch((err)=>{
+    console.log(err);
+});
