@@ -12,7 +12,14 @@ app.use("/admin",authAdmin)
 //app.use("/user",userAdmin);
 
 app.get("/user/getProfiles",userAdmin,(req,res)=>{
+    throw new error("abcdefghijkl");
     res.send("All the profiles of the users");
+})
+//Error Handling middleware 
+app.use('/',(err,req,res,next)=>{
+    if(err){
+        res.status(500).send("Something went wrong");
+    }
 })
 app.get("/admin/getData",(req,res)=>{
     res.send("Data sent successfully");
