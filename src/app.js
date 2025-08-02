@@ -2,24 +2,30 @@ const express = require('express');
 
 const app = express();
 
-app.get("/user",(req,res)=>{
-    res.send({firstname:"Shreya",lastName:"Aggarwal"});
+//creating admin/getData and admin/deleteUser api
+//Adding logic to check that admin is the one who is doing these operations
+// so this means everytime I want to check auth i need to add it in all admin apis but this is not good way to do this 
+// so here comes middleware as a saviour
+
+app.use("/admin",(req,res,next)=>{
+    console.log("Authenticating admin");
+    const token = "xyz";
+    const isAdmin = token === "xyz";
+    if(isAdmin){
+        next();
+    }
+    else{
+       res.status(401).send("Sorry ACCESS ONLY TO ADMIN");
+    }
 })
-app.post("/user",(req,res)=>{
-    res.send("Data saved successfully to DB");
+app.get("/admin/getData",(req,res)=>{
+    res.send("Data sent successfully");
 })
-app.put("/user",(req,res)=>{
-    res.send("Data updated successfully to DB");
+
+app.get("/admin/deleteUser",(req,res)=>{
+    res.send("Deleted a User");
 })
-app.delete("/user",(req,res)=>{
-    res.send("Data deleted successfully from DB");
-})
-app.patch("/user",(req,res)=>{
-    res.send("Data patch modified successfully to DB");
-})
-app.use("/admin",(req,res)=>{
-    res.send("Hello from the admin.")
-})
+
 
 app.listen(3000,()=>{
     console.log("Server is successfully listening on port 3000");
