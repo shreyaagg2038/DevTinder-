@@ -4,13 +4,10 @@ const app = express();
 const {connectDb} = require("./config/database");
 const {User} = require("./models/user");
 
+app.use(express.json());
 app.post("/signup",async (req,res)=>{
-    const userObj = {
-        firstName : "Ramna",
-        lastName : "Verma",
-        email : "ramna1234@gmail.com",
-        password : "Helloworld"
-    }
+    const userObj = req.body;
+    console.log(userObj);
     //CREATING A NEW INSTANCE OF USER MODEL
     try{
     const user1 = new User(userObj);
