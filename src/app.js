@@ -42,12 +42,12 @@ app.patch("/user",async(req,res)=>{
     console.log(userId);
     console.log(update);
     try{
-        const users  = await User.findByIdAndUpdate(userId,update,{returnDocument:"after"});
+        const users  = await User.findByIdAndUpdate(userId,update,{returnDocument:"after",runValidators:true});
         console.log(users);
         res.send("User Name updated successfully");
     }
     catch(err){
-        res.status(500).send("User not deleted");
+        res.status(500).send(err.message);
     }
 })
 
@@ -93,7 +93,7 @@ app.post("/signup",async (req,res)=>{
     res.send("User added successfully");
     }
     catch(err) {
-        res.status(500).send("Error while adding user");
+        res.status(500).send("Error while adding user " + err.message);
     }
 
 })
