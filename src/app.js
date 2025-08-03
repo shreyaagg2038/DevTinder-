@@ -36,13 +36,22 @@ app.delete("/user",async(req,res)=>{
     }
 })
 
-app.patch("/user",async(req,res)=>{
-    const userId = req.body.userId;
-    const update = req.body;
-    console.log(userId);
-    console.log(update);
+// I want only about,skills,age,gender,photoUrl that can be changed 
+app.patch("/user/:userId",async(req,res)=>{
+    const userId = req.params?.userId;
+    const data = req.body;
+    //console.log(userId);
+    //console.log(update);
+
     try{
-        const users  = await User.findByIdAndUpdate(userId,update,{returnDocument:"after",runValidators:true});
+        const ALLOWED_UPDATES = ["age","skills","gender","about","photoUrl"];
+    const canBeUpdated = Object.keys(data).every((k)=>
+            ALLOWED_UPDATES.includes(k));
+        console.log(canBeUpdated);
+        if(!canBeUpdated){
+            throw new Error ("These fields cant'be updated");
+        }
+        const users  = await User.findByIdAndUpdate(userId,data,{returnDocument:"after",runValidators:true});
         console.log(users);
         res.send("User Name updated successfully");
     }
