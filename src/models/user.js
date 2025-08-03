@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema({
     firstName : {
@@ -17,7 +18,10 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,
         trim:true,
-        maxLength:50
+        maxLength:50,
+        validate: (value)=>{
+            return validator.isEmail(value);
+        }
     },
     password :{
         type : String,
@@ -25,7 +29,9 @@ const userSchema = new mongoose.Schema({
         minLength:12,
         maxLength:30,
         validate:(value)=>{
-           return  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).*$/.test(value);
+            if(!validator.isStrongPassword(value)){
+                throw new Error("Please enter a strong password");
+            }
         }
     },
     age :{
@@ -34,6 +40,7 @@ const userSchema = new mongoose.Schema({
     },
     gender :{
         type : String,
+        lowercase : true,
         validate: (value)=>{
             const arr =["male","female","others"];
             if(!arr.includes(value)){
@@ -43,9 +50,13 @@ const userSchema = new mongoose.Schema({
     },
     photoUrl:{
         type:String,
-        default : "This is bio section",
         maxLength:100,
         trim :true
+    },
+
+    about:{
+        type : String,
+        default : "This is bio section"
     },
     skills:{
         type :[String],
