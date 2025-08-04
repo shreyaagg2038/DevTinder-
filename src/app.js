@@ -3,6 +3,9 @@ const express = require('express');
 const app = express();
 const {connectDb} = require("./config/database");
 const {User} = require("./models/user");
+const { validateSignUp } = require('./utils/validation');
+const bcrypt = require("bcrypt");
+const { default: mongoose } = require('mongoose');
 
 app.use(express.json());
 
@@ -93,18 +96,47 @@ app.get("/feed",async (req,res)=>{
     }
 })
 app.post("/signup",async (req,res)=>{
-    const userObj = req.body;
-    console.log(userObj);
+    // validate the fields 
+    // encrypt the password 
     //CREATING A NEW INSTANCE OF USER MODEL
     try{
-    const user1 = new User(userObj);
+    validateSignUp(req);
+    const {firstName,lastName,email,password } = req.body;
+    console.log(password);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log(hashedPassword);
+    const user1 = new User({firstName,lastName,email,password : hashedPassword});
     await user1.save();
     res.send("User added successfully");
     }
     catch(err) {
-        res.status(500).send("Error while adding user " + err.message);
+        res.status(500).send(err.message);
     }
 
+})
+
+app.post("/login",async (req,res)=>{
+    //validate username and password 
+    // authenticate username and password 
+    try{
+    const {email,password} = req.body;
+    const user = await User.findOne({email:email});
+    if(!user){
+        throw new Error ("User not found");
+    }
+    const hashedPassword = user.password;
+
+    const passwordCheck = bcrypt.compare(password, hashedPassword);
+    if(!passwordCheck){
+        throw new Error ("Incorrect Password");
+    }
+    else{
+        res.status(400).send("Login Successful");
+    }
+    }
+    catch(err){
+        res.status(401).send(err.message);
+    }
 })
 
 connectDb().then(()=>{
