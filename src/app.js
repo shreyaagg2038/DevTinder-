@@ -4,9 +4,7 @@ const app = express();
 const {connectDb} = require("./config/database");
 const {User} = require("./models/user");
 const { validateSignUp } = require('./utils/validation');
-const bcrypt = require("bcrypt");
 const { default: mongoose } = require('mongoose');
-const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const validator = require('validator');
 const {userAuth} = require("./middlewares/auth");
@@ -42,13 +40,9 @@ app.post("/login",async (req,res)=>{
     if(!user){
         throw new Error ("Invalid Credentials");
     }
-    const hashedPassword = user.password;
-    //console.log(user);
-
-    const passwordCheck = await bcrypt.compare(password, hashedPassword);
-    //console.log(passwordCheck);
+    const passwordCheck = await user.validatePassword(password);
     if(passwordCheck){
-        const token = jwt.sign({ _id : user._id }, "DEVTINDER@123",{expiresIn : "7d"});
+        const token = await user.getJWT();
         res.cookie("token",token, { expires: new Date(Date.now() + 7*3600000),});
         res.send("Login Successful");
 
