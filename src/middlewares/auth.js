@@ -1,28 +1,29 @@
-const authAdmin = (req,res,next)=>{
-    console.log("Authenticating admin");
-    const token = "xyz";
-    const isAdmin = token === "xyz";
-    if(isAdmin){
-        next();
-    }
-    else{
-       res.status(401).send("Sorry ACCESS ONLY TO ADMIN");
-    }
-}
+const { User } = require("../models/user");
+const jwt = require("jsonwebtoken");
 
-const userAdmin = (req,res,next)=>{
-    console.log("Authenticating user");
-    const token = "xyzggg";
-    const isUser = token === "xyzggg";
-    if(isUser){
-        next();
+const userAuth = async (req,res,next)=>{
+    try{
+    const cookies = req.cookies;
+    const {token} = cookies;
+    //console.log(token);
+    if(!token){
+        throw new Error ("Invalid Token");
     }
-    else{
-       res.status(401).send("Sorry ACCESS ONLY TO Users");
+    const decodedMessage = await jwt.verify(token,"DEVTINDER@123");
+    const {_id} = decodedMessage;
+    const user = await User.findById(_id);
+    //console.log(user);
+    if(!user){
+        throw new Error("User not found");
     }
-}
+    req.user = user;
+    next();
+    }
+    catch(err){
+        res.status(404).send("ERROR : " + err.message);
+    }
+};
 
 module.exports = {
-    authAdmin,
-    userAdmin
+    userAuth
 }

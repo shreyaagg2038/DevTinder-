@@ -6,105 +6,21 @@ const {User} = require("./models/user");
 const { validateSignUp } = require('./utils/validation');
 const bcrypt = require("bcrypt");
 const { default: mongoose } = require('mongoose');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+const validator = require('validator');
+const {userAuth} = require("./middlewares/auth");
 
 app.use(express.json());
+app.use(cookieParser());
 
-app.get("/user",async (req,res)=>{
-    try{
-    const filter = req.body.id;
-    //console.log(filter);
-    const users = await User.findById(filter);
-    if(!users){
-        res.status(404).send("User Not Found");
-    }
-    else{
-    res.send(users);
-    }
-
-    }
-    catch(err){
-        res.status(500).send(err.message);
-    }
-})
-
-app.delete("/user",async(req,res)=>{
-    const userId = req.body.userId;
-    try{
-        const users  = await User.findByIdAndDelete(userId);
-        //console.log(users);
-        res.send("User deleted successfully");
-    }
-    catch(err){
-        res.status(500).send("User not deleted");
-    }
-})
-
-// I want only about,skills,age,gender,photoUrl that can be changed 
-app.patch("/user/:userId",async(req,res)=>{
-    const userId = req.params?.userId;
-    const data = req.body;
-    //console.log(userId);
-    //console.log(update);
-
-    try{
-        const ALLOWED_UPDATES = ["age","skills","gender","about","photoUrl"];
-    const canBeUpdated = Object.keys(data).every((k)=>
-            ALLOWED_UPDATES.includes(k));
-        console.log(canBeUpdated);
-        if(!canBeUpdated){
-            throw new Error ("These fields cant'be updated");
-        }
-        const users  = await User.findByIdAndUpdate(userId,data,{returnDocument:"after",runValidators:true});
-        console.log(users);
-        res.send("User Name updated successfully");
-    }
-    catch(err){
-        res.status(500).send(err.message);
-    }
-})
-
-// app.put("/user",async(req,res)=>{
-//     const userId = req.body.userId;
-//     const update = req.body;
-//     console.log(userId);
-//     console.log(update);
-//     try{
-//         const users  = await User.findByIdAndUpdate(userId,update,{returnDocument:"after"});
-//         console.log(users);
-//         res.send("User Name updated successfully");
-//     }
-//     catch(err){
-//         res.status(500).send("User not deleted");
-//     }
-// })
-
-app.get("/feed",async (req,res)=>{
-    try{
-    //const filter = req.body.email;
-    //console.log(filter);
-    const users = await User.find({});
-    if(users.length===0){
-        res.status(404).send("User Not Found");
-    }
-    else{
-    res.send(users);
-    }
-
-    }
-    catch(err){
-        res.status(500).send("Something went wrong");
-    }
-})
 app.post("/signup",async (req,res)=>{
-    // validate the fields 
-    // encrypt the password 
-    //CREATING A NEW INSTANCE OF USER MODEL
     try{
     validateSignUp(req);
     const {firstName,lastName,email,password } = req.body;
-    console.log(password);
+    //console.log(password);
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(hashedPassword);
+    //console.log(hashedPassword);
     const user1 = new User({firstName,lastName,email,password : hashedPassword});
     await user1.save();
     res.send("User added successfully");
@@ -115,6 +31,8 @@ app.post("/signup",async (req,res)=>{
 
 })
 
+
+// whenever a user logs in -> a cookie is generated and sent in the response 
 app.post("/login",async (req,res)=>{
     //validate username and password 
     // authenticate username and password 
@@ -122,16 +40,21 @@ app.post("/login",async (req,res)=>{
     const {email,password} = req.body;
     const user = await User.findOne({email:email});
     if(!user){
-        throw new Error ("User not found");
+        throw new Error ("Invalid Credentials");
     }
     const hashedPassword = user.password;
+    //console.log(user);
 
-    const passwordCheck = bcrypt.compare(password, hashedPassword);
-    if(!passwordCheck){
-        throw new Error ("Incorrect Password");
+    const passwordCheck = await bcrypt.compare(password, hashedPassword);
+    //console.log(passwordCheck);
+    if(passwordCheck){
+        const token = jwt.sign({ _id : user._id }, "DEVTINDER@123",{expiresIn : "7d"});
+        res.cookie("token",token, { expires: new Date(Date.now() + 7*3600000),});
+        res.send("Login Successful");
+
     }
     else{
-        res.status(400).send("Login Successful");
+        throw new Error ("Invalid Credentials");
     }
     }
     catch(err){
@@ -139,6 +62,25 @@ app.post("/login",async (req,res)=>{
     }
 })
 
+app.post("/sendConnectionRequest",userAuth,async (req,res)=>{
+    try{
+        const user= req.user;
+        res.send("Connection request sent by: " + user.firstName);
+    }
+    catch(err){
+        res.status(404).send("ERROR " + err.message);
+    }
+});
+
+app.get("/profile",userAuth,async (req,res)=>{
+    try{
+        const user = req.user;
+        res.send(user);
+    }
+    catch(err){
+        res.status(500).send("ERROR: "+err.message);
+    }
+})
 connectDb().then(()=>{
     console.log("Successfully connected to the DB");
     app.listen(3000,()=>{
