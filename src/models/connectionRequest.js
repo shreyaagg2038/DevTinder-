@@ -30,6 +30,7 @@ connectionRequestSchema.pre('save',function(next){
     }
     next();
 })
+connectionRequestSchema.index({fromUserId:1,toUserId:1});
 const ConnectionRequest = new mongoose.model("ConnectionRequest",connectionRequestSchema);
 
 module.exports = {ConnectionRequest};
