@@ -1,5 +1,6 @@
 
 const validator = require("validator");
+const { User } = require("../models/user");
 const validateSignUp = (req)=>{
     const {firstName,lastName,email,password} = req.body;
 
@@ -20,20 +21,6 @@ const validateProfileEdit = (req)=>{
     if(!isAllowed){
         throw new Error ("These fields can't be edited");
     }
-    // const sanityCheck = Object.keys(req.body).forEach((key)=>{
-    //     if(key=="firstName"){
-    //         return key.length>4;
-    //     }
-    //     if(key == "skills"){
-    //         return key.length<=10;
-    //     }
-    //     if(key == "about"){
-    //         return key.length<=50;
-    //     }
-    // })
-    // if(!sanityCheck){
-    //     throw new Error("Edit was unsuccessful");
-    // }
 }
 
 const validateEditPassword = (req)=>{
@@ -43,4 +30,18 @@ const validateEditPassword = (req)=>{
         throw new Error ("Please enter a strong password");
     }
 }
-module.exports = {validateSignUp,validateProfileEdit,validateEditPassword};
+const validateConnectionRequest = async function (req){
+    const toUserId= req.params.userId;
+    const status = req.params.status;
+    const allowedStatus = ["ignored","interested"];
+    const isStatusAllowed = allowedStatus.includes(status);
+    if(!isStatusAllowed){
+        throw new Error ("Status not supported");
+    }
+    const isUserPresent = await User.findById(toUserId);
+    //console.log(!isUserPresent);
+    if(!isUserPresent){
+        throw new Error ("User not found");
+    }
+}
+module.exports = {validateSignUp,validateProfileEdit,validateEditPassword,validateConnectionRequest};
