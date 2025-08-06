@@ -40,7 +40,7 @@ requestRouter.post('/request/review/:status/:requestId',userAuth,async (req,res)
         const requestId = req.params.requestId;
         const loggedInUser = req.user._id;
         if(!allowedStatus.includes(status)){
-            res.status(404).json({message:"Invalid status"});
+           throw new Error ("Invalid Status");
         }
         const connectionRequest = await ConnectionRequest.findOne({
             _id : requestId,
@@ -48,7 +48,7 @@ requestRouter.post('/request/review/:status/:requestId',userAuth,async (req,res)
             status: "interested"
         })
         if(!connectionRequest){
-            res.status(404).json({message:"Connection request not found"});
+            throw new Error("Connection request not found");
         }
         connectionRequest.status = status;
         await connectionRequest.save();
