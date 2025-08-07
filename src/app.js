@@ -4,6 +4,7 @@ const app = express();
 const {connectDb} = require("./config/database");
 const { default: mongoose } = require('mongoose');
 const cookieParser = require('cookie-parser');
+const cors = require('cors')
 
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
@@ -12,6 +13,11 @@ const userRouter = require("./routes/user");
 
 app.use(cookieParser());
 app.use(express.json());
+app.use(cors( {
+      origin: 'http://localhost:5173', // Allow only a specific origin
+      credentials: true,            // Enable cookies and credentials
+    }))
+
 
 app.use('/',authRouter);
 app.use('/',profileRouter);
