@@ -1,8 +1,10 @@
 const express = require("express");
 const { userAuth } = require("../middlewares/auth");
 const { ConnectionRequest } = require("../models/connectionRequest");
+const { User } = require("../models/user");
+const { set } = require("mongoose");
 const userRouter = express.Router();
-const USER_SAFE_DATA = "firstName lastName age Gender Skills"
+const USER_SAFE_DATA = "firstName lastName age gender skills"
 
 userRouter.get('/user/connections',userAuth,async (req,res)=>{
     try{
@@ -32,7 +34,7 @@ userRouter.get('/user/requests/received',userAuth,async (req,res)=>{
     try{
         const loggedInUserId = req.user._id;
         const requests = await ConnectionRequest
-        .find({toUserId:loggedInUserId,status:"interested"})
+        .find({toUserId:loggedInUserId,status:"interested"}).select("fromUserId")
         .populate("fromUserId",USER_SAFE_DATA);
         if(!requests){
             res.status(400).json({message:"No requests"});
@@ -41,6 +43,33 @@ userRouter.get('/user/requests/received',userAuth,async (req,res)=>{
     }
     catch(err){
         res.status(404).json({message:`${err.message}`});
+    }
+})
+
+userRouter.get('/user/feed',userAuth,async (req,res)=>{
+    try{
+        const loggedInUser = req.user;
+        const connectionRequests = await ConnectionRequest
+        .find({$or:[{fromUserId:loggedInUser._id},
+                    {toUserId:loggedInUser._id}
+        ]}).select("fromUserId toUserId");
+
+        const hideFromFeedUsers = new Set();
+        connectionRequests.forEach((req)=>{
+            hideFromFeedUsers.add(req.fromUserId);
+            hideFromFeedUsers.add(req.toUserId);
+        })
+        const users =  await User.find({
+            $and :[
+                {_id : {$nin : Array.from(hideFromFeedUsers)}},
+                {_id : {$ne : loggedInUser._id}}
+            ]
+        })
+        .select(USER_SAFE_DATA);
+        res.json({message:"Other Users",data : users});
+    }
+    catch(err){
+        res.status(400).json({message:`${err.message}`});
     }
 })
 module.exports =userRouter;
