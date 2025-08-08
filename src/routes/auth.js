@@ -12,9 +12,15 @@ authRouter.post("/signup",async (req,res)=>{
     //console.log(password);
     const hashedPassword = await bcrypt.hash(password, 10);
     //console.log(hashedPassword);
+    const findUser = await User.findOne({email:email});
+    if(findUser){
+        throw new Error("User already exists");
+    }
     const user1 = new User({firstName,lastName,email,password : hashedPassword});
-    await user1.save();
-    res.send("User added successfully");
+    const newUser = await user1.save();
+    const token = await newUser.getJWT();
+    res.cookie("token",token, { expires: new Date(Date.now() + 24*3600000),});
+    res.send(newUser);
     }
     catch(err) {
         res.status(500).send(err.message);
@@ -36,7 +42,6 @@ authRouter.post("/login",async (req,res)=>{
         const token = await user.getJWT();
         res.cookie("token",token, { expires: new Date(Date.now() + 24*3600000),});
         res.send(user);
-
     }
     else{
         throw new Error ("Invalid Credentials");

@@ -4,7 +4,7 @@ const { ConnectionRequest } = require("../models/connectionRequest");
 const { User } = require("../models/user");
 const { set } = require("mongoose");
 const userRouter = express.Router();
-const USER_SAFE_DATA = "firstName lastName age gender skills"
+const USER_SAFE_DATA = "firstName lastName age gender skills photoUrl about"
 
 userRouter.get('/user/connections',userAuth,async (req,res)=>{
     try{
@@ -39,7 +39,7 @@ userRouter.get('/user/requests/received',userAuth,async (req,res)=>{
         if(!requests){
             res.status(400).json({message:"No requests"});
         }
-        res.json({message:`Following are ${req.user.firstName}'s requests to be reviewed: `,data : requests});
+        res.json(requests);
     }
     catch(err){
         res.status(404).json({message:`${err.message}`});

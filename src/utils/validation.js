@@ -16,7 +16,7 @@ const validateSignUp = (req)=>{
 }
 
 const validateProfileEdit = (req)=>{
-    const allowedEditFields = ["firstName","lastName","age","gender","about","skills"];
+    const allowedEditFields = ["firstName","lastName","age","gender","about","skills","photoUrl"];
     const isAllowed = Object.keys(req.body).every(field=> allowedEditFields.includes(field));
     if(!isAllowed){
         throw new Error ("These fields can't be edited");

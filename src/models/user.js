@@ -50,7 +50,6 @@ const userSchema = new mongoose.Schema({
     },
     photoUrl:{
         type:String,
-        maxLength:100,
         trim :true
     },
 
